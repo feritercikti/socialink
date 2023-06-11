@@ -1,6 +1,13 @@
 .react-grid-item.react-grid-placeholder {
-  @apply bg-black rounded-lg;
+  @apply bg-gray-300 rounded-3xl;
 }
-/* .react-resizable-handle {
+.react-resizable-handle {
   @apply hidden;
+}
+
+.textarea-container {
+  @apply w-full h-full;
+}
+/* .textarea-container.hovered textarea {
+  @apply bg-gray-100 w-full h-full;
 } */

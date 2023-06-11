@@ -10,7 +10,7 @@ const Profile = () => {
     }
   };
   return (
-    <div className='flex flex-1 flex-col gap-5 '>
+    <div className='flex flex-1 flex-col gap-5 sticky mt-10 '>
       <div className='border-dashed border-2 border-gray-300 py-16 px-12 rounded-[50%] w-fit bg-gray-100 hover:bg-gray-200'>
         <label
           htmlFor='avatarInput'
