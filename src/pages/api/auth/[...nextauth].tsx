@@ -1,8 +1,8 @@
 import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import { UserModel } from '@/backend/models/userModel';
+import User from '@/models/userModel';
 import bcrypt from 'bcryptjs';
-import dbConnect from '@/backend/config/dbConnect';
+import dbConnect from '@/config/dbConnect';
 
 export default NextAuth({
   session: {
@@ -20,7 +20,7 @@ export default NextAuth({
           password: string;
         };
 
-        const user = await UserModel.findOne({ email });
+        const user = await User.findOne({ email });
 
         if (!user) {
           throw new Error('Invalid Email or Password');
@@ -43,14 +43,12 @@ export default NextAuth({
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.role = user.role;
         token.id = user.id;
       }
       return token;
     },
     async session({ session, token, user }) {
       if (session.user) {
-        session.role = token.role;
         session.id = token.id;
       }
       return session;

@@ -1,21 +1,17 @@
 import React, { useEffect } from 'react';
-import { useState, useCallback, useContext } from 'react';
+import { useState, useCallback, useContext, useRef } from 'react';
 import GridLayout, { Layout } from 'react-grid-layout';
 import Profile from '@/components/Profile';
 import { AiOutlineDelete } from 'react-icons/ai';
 import { BiRectangle } from 'react-icons/bi';
-import {
-  LuRectangleHorizontal,
-  LuRectangleVertical,
-  LuAlignLeft,
-  LuAlignRight,
-  LuAlignCenter,
-  LuAlignVerticalJustifyStart,
-  LuAlignVerticalJustifyCenter,
-  LuAlignVerticalJustifyEnd,
-} from 'react-icons/lu';
+import { LuRectangleHorizontal, LuRectangleVertical } from 'react-icons/lu';
 import { BsThreeDots } from 'react-icons/bs';
 import { ThemeContext } from '@/ThemeContext';
+import html2canvas from 'html2canvas';
+import Menu from '@/components/Menu';
+import axios from 'axios';
+import { signOut, useSession } from 'next-auth/react';
+import { useRouter } from 'next/router';
 
 type TextAlign =
   | 'start'
@@ -39,6 +35,7 @@ const User = () => {
       selectedSubButton: 'luAlignLeft',
       textAlignment: 'left' as TextAlign,
       background: 'white',
+      text: 'Add Note',
     },
     {
       i: 'b',
@@ -51,6 +48,7 @@ const User = () => {
       selectedSubButton: 'luAlignLeft',
       textAlignment: 'left' as TextAlign,
       background: 'white',
+      text: 'Add Note',
     },
   ]);
 
@@ -58,11 +56,52 @@ const User = () => {
   const [draggingItem, setDraggingItem] = useState<string | null>(null);
   const [showMenu, setShowMenu] = useState(false);
   const [openSubMenu, setOpenSubMenu] = useState<string | null>(null);
+  const [cover, setCover] = useState('');
+  const [name, setName] = useState('');
+  const [bio, setBio] = useState('');
+  const [avatar, setAvatar] = useState('');
+  const [background, setBackground] = useState<string>('');
+  const [saveStatus, setSaveStatus] = useState('Save');
 
   const { darkTheme, toggleDarkTheme } = useContext(ThemeContext);
 
+  const buttonsContainerRef = useRef<HTMLDivElement>(null);
+
+  const router = useRouter();
+  const { id } = router.query;
+
   const handleToggleTheme = () => {
     toggleDarkTheme();
+  };
+
+  const CaptureImage = () => {
+    const containerRef = buttonsContainerRef.current;
+
+    // Exclude the imageColors.map part by temporarily removing it from the DOM
+    const imageColorsDiv = containerRef!.querySelector(
+      '.image-colors'
+    ) as HTMLDivElement | null;
+    const imageColorsDivParent = imageColorsDiv?.parentNode as Node;
+
+    if (imageColorsDiv && imageColorsDivParent) {
+      imageColorsDivParent.removeChild(imageColorsDiv);
+    }
+
+    // Capture only the visible part of the screen
+    html2canvas(containerRef!, {
+      width: window.innerWidth,
+      height: window.innerHeight,
+    }).then(function (canvas) {
+      var a = document.createElement('a');
+      a.href = canvas.toDataURL('image/png');
+      a.download = 'capture.png';
+      a.click();
+
+      // Restore the imageColors.map part to the DOM
+      if (imageColorsDiv && imageColorsDivParent) {
+        imageColorsDivParent.appendChild(imageColorsDiv);
+      }
+    });
   };
 
   const handleAddItem = () => {
@@ -77,6 +116,7 @@ const User = () => {
       selectedSubButton: 'luAlignLeft',
       textAlignment: 'left' as TextAlign,
       background: 'white',
+      text: 'Add Note',
     };
 
     setLayout((prevLayout) => [...prevLayout, newItem]);
@@ -234,33 +274,59 @@ const User = () => {
     },
   ];
 
-  const menuItems = [
-    {
-      id: 'luAlignLeft',
-      icon: <LuAlignLeft size={18} />,
-    },
-    {
-      id: 'luAlignCenter',
-      icon: <LuAlignCenter size={18} />,
-    },
-    {
-      id: 'luAlignRight',
-      icon: <LuAlignRight size={18} />,
-    },
-    {
-      id: 'luAlignVerticalJustifyStart',
-      icon: <LuAlignVerticalJustifyStart size={18} />,
-    },
-    {
-      id: 'luAlignVerticalJustifyCenter',
-      icon: <LuAlignVerticalJustifyCenter size={18} />,
-    },
-    {
-      id: 'luAlignVerticalJustifyEnd',
-      icon: <LuAlignVerticalJustifyEnd size={18} />,
-    },
-  ];
+  const handleSave = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    setSaveStatus('Saving..');
+    const containerRef = buttonsContainerRef.current;
 
+    // Exclude the imageColors.map part by temporarily removing it from the DOM
+    const imageColorsDiv = containerRef!.querySelector(
+      '.image-colors'
+    ) as HTMLDivElement | null;
+    const imageColorsDivParent = imageColorsDiv?.parentNode as Node;
+
+    if (imageColorsDiv && imageColorsDivParent) {
+      imageColorsDivParent.removeChild(imageColorsDiv);
+    }
+
+    // Capture only the visible part of the screen
+    html2canvas(containerRef!, {
+      width: window.innerWidth,
+      height: window.innerHeight,
+    }).then(async function (canvas) {
+      const image = canvas.toDataURL('image/png');
+      const formData = new FormData();
+      formData.append('file', image);
+      try {
+        const response = await axios.post('/api/upload', formData);
+        const imageUrl = response.data.url;
+
+        setCover(imageUrl);
+
+        const data = {
+          id: id,
+          name: name,
+          bio: bio,
+          avatar: avatar,
+          cover: imageUrl, // Use the updated imageUrl here
+          layout: layout,
+        };
+
+        await axios.post('/api/user', data);
+
+        console.log('Data sent to the server');
+      } catch (error) {
+        console.error('Error sending data to the server:', error);
+      }
+
+      // Restore the imageColors.map part to the DOM
+      if (imageColorsDiv && imageColorsDivParent) {
+        imageColorsDivParent.appendChild(imageColorsDiv);
+      }
+
+      setSaveStatus('Save');
+    });
+  };
   useEffect(() => {
     const body = document.querySelector('body');
     if (body) {
@@ -284,8 +350,20 @@ const User = () => {
           {darkTheme ? 'Light' : 'Dark'}
         </button>
       </div>
-      <div className='mt-6 mx-12 flex justify-center'>
-        <Profile />
+      <div
+        className='mt-6 mx-12 mb-12 flex justify-center'
+        ref={buttonsContainerRef}
+      >
+        <Profile
+          name={name}
+          setName={setName}
+          bio={bio}
+          setBio={setBio}
+          avatar={avatar}
+          setAvatar={setAvatar}
+          background={background}
+          setBackground={setBackground}
+        />
         <GridLayout
           className='flex flex-[2_2_0%] w-full -mt-6'
           layout={layout}
@@ -315,11 +393,11 @@ const User = () => {
               }}
               onMouseLeave={handleContainerMouseLeave}
             >
-              <div className='border rounded-3xl border-gray-200 h-full w-full px-3 py-3  '>
+              <div className='border rounded-3xl border-gray-300 h-full w-full px-3 py-3  '>
                 <div className='textarea-container '>
                   <textarea
-                    placeholder='Add Note'
-                    className='rounded-2xl px-2 py-2 outline-none hover:bg-gray-100 ease-in duration-300 hover:text-black h-full w-full overflow-hidden resize-none text-xl'
+                    placeholder={item.text}
+                    className='rounded-2xl px-2 py-2 outline-none hover:bg-gray-400 text-black h-full w-full overflow-hidden resize-none text-xl'
                     style={{
                       backgroundColor: item.background,
                       textAlign: item.textAlignment,
@@ -334,11 +412,11 @@ const User = () => {
                   <>
                     <div className='absolute -top-4 -left-4 cursor-pointer'>
                       <div
-                        className={`bg-${
-                          darkTheme ? 'black' : 'white'
-                        } border ${
-                          darkTheme ? 'border-none' : 'border-gray-200'
-                        } w-[36px] h-[36px] rounded-[50%] flex items-center justify-center`}
+                        className={`${
+                          darkTheme
+                            ? 'bg-black border-none hover:bg-gray-600'
+                            : 'bg-white border border-gray-200 hover:bg-gray-200'
+                        }  w-[36px] h-[36px] rounded-[50%] flex items-center justify-center`}
                       >
                         <button onClick={() => handleDeleteItem(item.i)}>
                           <AiOutlineDelete className='text-[18px]' />
@@ -378,36 +456,11 @@ const User = () => {
                           </button>
                         </div>
                         {showMenu && (
-                          <div className='items-center justify-center z-[9999] absolute -bottom-9  mt-3 bg-black  rounded-lg  px-2 py-1 flex gap-2'>
-                            {menuItems.map((menuItem) => (
-                              <div
-                                key={menuItem.id}
-                                className={`bg-${
-                                  item.selectedSubButton === menuItem.id
-                                    ? 'white'
-                                    : 'black'
-                                } text-${
-                                  item.selectedSubButton === menuItem.id
-                                    ? 'black'
-                                    : 'white'
-                                } 
-                              cursor-pointer w-[24px] h-[24px] flex items-center justify-center rounded-sm`}
-                              >
-                                <button
-                                  onClick={() =>
-                                    handleAlignmentChange(item.i, menuItem.id)
-                                  }
-                                >
-                                  {menuItem.icon}
-                                </button>
-                              </div>
-                            ))}
-                            <span className='h-3 bg-gray-600 w-[1px] '></span>
-                            <div
-                              className='h-4 w-4 rounded-[50%] bg-white cursor-pointer'
-                              onClick={() => handleBackgroundChange(item.i)}
-                            ></div>
-                          </div>
+                          <Menu
+                            item={item}
+                            handleAlignmentChange={handleAlignmentChange}
+                            handleBackgroundChange={handleBackgroundChange}
+                          />
                         )}
                       </div>
                     </div>
@@ -418,12 +471,18 @@ const User = () => {
           ))}
         </GridLayout>
       </div>
-      <div className='w-full items-center justify-center flex fixed bottom-4 left-0 right-0'>
+      <div className='w-full gap-2 flex fixed bottom-4 left-6 right-0 mt-2'>
+        <button
+          className='bg-gray-600 text-white rounded-lg px-2 py-1 '
+          onClick={() => signOut()}
+        >
+          Logout
+        </button>
         <button
           className='bg-green-400 text-white rounded-lg px-2 py-1 '
           onClick={handleAddItem}
         >
-          Add birectangle
+          Add Text
         </button>
         <button
           className='bg-green-400 text-white rounded-lg px-2 py-1 '
@@ -432,10 +491,22 @@ const User = () => {
           Add Image
         </button>
         <button
-          className='bg-black-400 text-white rounded-lg px-2 py-1 '
+          className='bg-black text-white rounded-lg px-2 py-1 '
           onClick={handleAddItem}
         >
-          Add Text
+          Add Link
+        </button>
+        <button
+          className='bg-black text-white rounded-lg px-2 py-1 '
+          onClick={handleAddItem}
+        >
+          Add Header
+        </button>
+        <button
+          className='bg-green-400 text-white rounded-lg px-2 py-1 '
+          onClick={handleSave}
+        >
+          {saveStatus}
         </button>
       </div>
     </>
