@@ -7,11 +7,11 @@ import { BiRectangle } from 'react-icons/bi';
 import { LuRectangleHorizontal, LuRectangleVertical } from 'react-icons/lu';
 import { BsThreeDots } from 'react-icons/bs';
 import { ThemeContext } from '@/ThemeContext';
-import html2canvas from 'html2canvas';
 import Menu from '@/components/Menu';
 import axios from 'axios';
 import { signOut, useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
+import { CaptureImage } from '@/utils/imageUtils';
 
 type TextAlign =
   | 'start'
@@ -21,6 +21,16 @@ type TextAlign =
   | 'center'
   | 'justify'
   | 'match-parent';
+
+interface UserData {
+  id: number;
+  name: string;
+  background: string;
+  bio: string;
+  avatar: string;
+  cover: string;
+  layout: string;
+}
 
 const User = () => {
   const [layout, setLayout] = useState([
@@ -56,10 +66,10 @@ const User = () => {
   const [draggingItem, setDraggingItem] = useState<string | null>(null);
   const [showMenu, setShowMenu] = useState(false);
   const [openSubMenu, setOpenSubMenu] = useState<string | null>(null);
-  const [cover, setCover] = useState('');
   const [name, setName] = useState('');
   const [bio, setBio] = useState('');
   const [avatar, setAvatar] = useState('');
+  const [cover, setCover] = useState('');
   const [background, setBackground] = useState<string>('');
   const [saveStatus, setSaveStatus] = useState('Save');
 
@@ -70,45 +80,17 @@ const User = () => {
   const router = useRouter();
   const { id } = router.query;
 
+  const session = useSession();
+
   const handleToggleTheme = () => {
     toggleDarkTheme();
-  };
-
-  const CaptureImage = () => {
-    const containerRef = buttonsContainerRef.current;
-
-    // Exclude the imageColors.map part by temporarily removing it from the DOM
-    const imageColorsDiv = containerRef!.querySelector(
-      '.image-colors'
-    ) as HTMLDivElement | null;
-    const imageColorsDivParent = imageColorsDiv?.parentNode as Node;
-
-    if (imageColorsDiv && imageColorsDivParent) {
-      imageColorsDivParent.removeChild(imageColorsDiv);
-    }
-
-    // Capture only the visible part of the screen
-    html2canvas(containerRef!, {
-      width: window.innerWidth,
-      height: window.innerHeight,
-    }).then(function (canvas) {
-      var a = document.createElement('a');
-      a.href = canvas.toDataURL('image/png');
-      a.download = 'capture.png';
-      a.click();
-
-      // Restore the imageColors.map part to the DOM
-      if (imageColorsDiv && imageColorsDivParent) {
-        imageColorsDivParent.appendChild(imageColorsDiv);
-      }
-    });
   };
 
   const handleAddItem = () => {
     const newItem = {
       i: `item_${layout.length}`,
       x: 0,
-      y: Infinity,
+      y: 0,
       w: 1,
       h: 3,
       minWidth: 0,
@@ -274,59 +256,45 @@ const User = () => {
     },
   ];
 
-  const handleSave = async (e: React.MouseEvent<HTMLButtonElement>) => {
+  const handleSave = async (imageUrl: string) => {
+    const data = {
+      id: id,
+      name: name,
+      background: background,
+      bio: bio,
+      avatar: avatar,
+      cover: imageUrl,
+      layout: layout,
+    };
+    try {
+      await axios.post('/api/user', data);
+      console.log('Data sent to the server');
+    } catch (error) {
+      console.error('Error sending data to the server:', error);
+    }
+  };
+
+  const handleSaveAndCapture = async (
+    e: React.MouseEvent<HTMLButtonElement>
+  ) => {
     e.preventDefault();
     setSaveStatus('Saving..');
-    const containerRef = buttonsContainerRef.current;
 
-    // Exclude the imageColors.map part by temporarily removing it from the DOM
-    const imageColorsDiv = containerRef!.querySelector(
-      '.image-colors'
-    ) as HTMLDivElement | null;
-    const imageColorsDivParent = imageColorsDiv?.parentNode as Node;
+    try {
+      const imageUrl = await CaptureImage(buttonsContainerRef.current!);
 
-    if (imageColorsDiv && imageColorsDivParent) {
-      imageColorsDivParent.removeChild(imageColorsDiv);
+      if (imageUrl!) {
+        await handleSave(imageUrl);
+      } else {
+        console.error('Error capturing image: imageUrl is null or undefined');
+      }
+    } catch (error) {
+      console.error('Error capturing image or saving data:', error);
     }
 
-    // Capture only the visible part of the screen
-    html2canvas(containerRef!, {
-      width: window.innerWidth,
-      height: window.innerHeight,
-    }).then(async function (canvas) {
-      const image = canvas.toDataURL('image/png');
-      const formData = new FormData();
-      formData.append('file', image);
-      try {
-        const response = await axios.post('/api/upload', formData);
-        const imageUrl = response.data.url;
-
-        setCover(imageUrl);
-
-        const data = {
-          id: id,
-          name: name,
-          bio: bio,
-          avatar: avatar,
-          cover: imageUrl, // Use the updated imageUrl here
-          layout: layout,
-        };
-
-        await axios.post('/api/user', data);
-
-        console.log('Data sent to the server');
-      } catch (error) {
-        console.error('Error sending data to the server:', error);
-      }
-
-      // Restore the imageColors.map part to the DOM
-      if (imageColorsDiv && imageColorsDivParent) {
-        imageColorsDivParent.appendChild(imageColorsDiv);
-      }
-
-      setSaveStatus('Save');
-    });
+    setSaveStatus('Save');
   };
+
   useEffect(() => {
     const body = document.querySelector('body');
     if (body) {
@@ -338,7 +306,7 @@ const User = () => {
     }
   }, [darkTheme]);
 
-  console.log(layout);
+  console.log(background);
 
   return (
     <>
@@ -393,10 +361,19 @@ const User = () => {
               }}
               onMouseLeave={handleContainerMouseLeave}
             >
-              <div className='border rounded-3xl border-gray-300 h-full w-full px-3 py-3  '>
+              <div className='border-2 rounded-3xl border-gray-300 h-full w-full px-3 py-3  '>
                 <div className='textarea-container '>
                   <textarea
                     placeholder={item.text}
+                    onChange={(e) =>
+                      setLayout((prevLayout) =>
+                        prevLayout.map((prevItem) =>
+                          prevItem.i === item.i
+                            ? { ...prevItem, text: e.target.value }
+                            : prevItem
+                        )
+                      )
+                    }
                     className='rounded-2xl px-2 py-2 outline-none hover:bg-gray-400 text-black h-full w-full overflow-hidden resize-none text-xl'
                     style={{
                       backgroundColor: item.background,
@@ -457,6 +434,7 @@ const User = () => {
                         </div>
                         {showMenu && (
                           <Menu
+                            key={item.i}
                             item={item}
                             handleAlignmentChange={handleAlignmentChange}
                             handleBackgroundChange={handleBackgroundChange}
@@ -498,13 +476,13 @@ const User = () => {
         </button>
         <button
           className='bg-black text-white rounded-lg px-2 py-1 '
-          onClick={handleAddItem}
+          // onClick={CaptureImage}
         >
-          Add Header
+          Capture{' '}
         </button>
         <button
           className='bg-green-400 text-white rounded-lg px-2 py-1 '
-          onClick={handleSave}
+          onClick={handleSaveAndCapture}
         >
           {saveStatus}
         </button>

@@ -87,8 +87,12 @@ const Profile = ({
     }
   }, [avatar]);
 
-  console.log(background);
-  console.log(name);
+  useEffect(() => {
+    setBackground(background); // Call the callback function to update the background in the parent component
+  }, [background]);
+
+  // console.log(background);
+  // console.log(name);
 
   return (
     <div className='flex flex-1 mt-3 flex-col items-center  gap-5 w-full h-[calc(100vh-80px)] sticky top-0 '>

@@ -18,6 +18,10 @@
   justify-content: center;
 }
 
+.textarea-container:hover .text-area-hover {
+  background-color: #ccc; /* Replace #ccc with the desired background color */
+}
+
 body.dark-theme {
   background-color: #1f1f1f;
   color: #ffffff;

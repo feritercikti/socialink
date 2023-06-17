@@ -48,37 +48,40 @@ const layoutSchema = new mongoose.Schema({
   },
 });
 
-const userSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    default: '',
+const userSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      default: '',
+    },
+    password: {
+      type: String,
+      required: true,
+    },
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+    },
+    background: {
+      type: String,
+      default: '',
+    },
+    bio: {
+      type: String,
+      default: '',
+    },
+    avatar: {
+      type: String,
+      default: '',
+    },
+    cover: {
+      type: String,
+      default: '',
+    },
+    layout: [layoutSchema],
   },
-  password: {
-    type: String,
-    required: true,
-  },
-  email: {
-    type: String,
-    required: true,
-    unique: true,
-  },
-  background: {
-    type: String,
-    default: '',
-  },
-  bio: {
-    type: String,
-    default: '',
-  },
-  avatar: {
-    type: String,
-    default: '',
-  },
-  cover: {
-    type: String,
-    default: '',
-  },
-  layout: [layoutSchema],
-});
+  { timestamps: true }
+);
 
 export default mongoose.models.User || mongoose.model('User', userSchema);
