@@ -9,68 +9,71 @@ import { BsThreeDots } from 'react-icons/bs';
 import { ThemeContext } from '@/ThemeContext';
 import Menu from '@/components/Menu';
 import axios from 'axios';
-import { signOut, useSession } from 'next-auth/react';
+import { signOut } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import { CaptureImage } from '@/utils/imageUtils';
+import { GetServerSideProps } from 'next';
+import { User } from '@/types/types';
+import LinkModal from '@/components/LinkModal';
+import TextArea from '@/components/TextArea';
+import SocialLink from '@/components/SocialLink';
+import ImageLayout from '@/components/ImageLayout';
 
-type TextAlign =
-  | 'start'
-  | 'end'
-  | 'left'
-  | 'right'
-  | 'center'
-  | 'justify'
-  | 'match-parent';
+type TextAlign = 'left' | 'right' | 'center';
 
-interface UserData {
-  id: number;
-  name: string;
-  background: string;
-  bio: string;
-  avatar: string;
-  cover: string;
-  layout: string;
-}
+const defaultLayout = [
+  {
+    i: 'a',
+    x: 0,
+    y: 0,
+    w: 1,
+    h: 3,
+    minWidth: 1,
+    selectedButton: 'biRectangle',
+    selectedSubButton: 'luAlignLeft',
+    textAlignment: 'left' as TextAlign,
+    background: 'white',
+    text: 'Add Note',
+    type: 'type',
+    link: '',
+    layoutImage: '/default.jpeg',
+  },
+  {
+    i: 'b',
+    x: 1,
+    y: 0,
+    w: 2,
+    h: 2,
+    minWidth: 1,
+    selectedButton: 'luRectangleHorizontal',
+    selectedSubButton: 'luAlignLeft',
+    textAlignment: 'left' as TextAlign,
+    background: 'white',
+    text: 'Add Note',
+    type: 'type',
+    link: '',
+    layoutImage: '/default.jpeg',
+  },
+];
 
-const User = () => {
-  const [layout, setLayout] = useState([
-    {
-      i: 'a',
-      x: 0,
-      y: 0,
-      w: 1,
-      h: 3,
-      minWidth: 1,
-      selectedButton: 'biRectangle',
-      selectedSubButton: 'luAlignLeft',
-      textAlignment: 'left' as TextAlign,
-      background: 'white',
-      text: 'Add Note',
-    },
-    {
-      i: 'b',
-      x: 1,
-      y: 0,
-      w: 2,
-      h: 2,
-      minWidth: 1,
-      selectedButton: 'luRectangleHorizontal',
-      selectedSubButton: 'luAlignLeft',
-      textAlignment: 'left' as TextAlign,
-      background: 'white',
-      text: 'Add Note',
-    },
-  ]);
+const User = ({ data }: { data: User }) => {
+  const [layout, setLayout] = useState(data.layout || defaultLayout);
 
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const [draggingItem, setDraggingItem] = useState<string | null>(null);
   const [showMenu, setShowMenu] = useState(false);
   const [openSubMenu, setOpenSubMenu] = useState<string | null>(null);
-  const [name, setName] = useState('');
-  const [bio, setBio] = useState('');
-  const [avatar, setAvatar] = useState('');
-  const [cover, setCover] = useState('');
-  const [background, setBackground] = useState<string>('');
+  const [name, setName] = useState(data.name);
+  const [bio, setBio] = useState(data.bio);
+  const [avatar, setAvatar] = useState(data.avatar);
+  const [avatarUploaded, setAvatarUploaded] = useState(data.avatarUploaded);
+  const [imageColors, setImageColors] = useState<string[]>(data.imageColors);
+  const [openLinkModal, setOpenLinkModal] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
+
+  const [background, setBackground] = useState<string>(
+    data.background ? data.background : ''
+  );
   const [saveStatus, setSaveStatus] = useState('Save');
 
   const { darkTheme, toggleDarkTheme } = useContext(ThemeContext);
@@ -80,13 +83,11 @@ const User = () => {
   const router = useRouter();
   const { id } = router.query;
 
-  const session = useSession();
-
   const handleToggleTheme = () => {
     toggleDarkTheme();
   };
 
-  const handleAddItem = () => {
+  const handleAddItem = (type: string, link?: string, layoutImage?: string) => {
     const newItem = {
       i: `item_${layout.length}`,
       x: 0,
@@ -99,12 +100,25 @@ const User = () => {
       textAlignment: 'left' as TextAlign,
       background: 'white',
       text: 'Add Note',
+      type: type,
+      link: link || 'link',
+      layoutImage: layoutImage || '',
     };
 
     setLayout((prevLayout) => [...prevLayout, newItem]);
   };
   const handleDeleteItem = (itemId: string) => {
     setLayout((prevLayout) => prevLayout.filter((item) => item.i !== itemId));
+  };
+
+  const handleChangeLayoutImage = (itemId: string, newLayoutImage: string) => {
+    console.log('handleChangeLayoutImage called with itemId:', itemId);
+    console.log('newLayoutImage:', newLayoutImage);
+    setLayout((prevLayout) =>
+      prevLayout.map((item) =>
+        item.i === itemId ? { ...item, layoutImage: newLayoutImage } : item
+      )
+    );
   };
 
   const handleSizeChange = (
@@ -263,6 +277,8 @@ const User = () => {
       background: background,
       bio: bio,
       avatar: avatar,
+      avatarUploaded: avatarUploaded,
+      imageColors: imageColors,
       cover: imageUrl,
       layout: layout,
     };
@@ -306,7 +322,25 @@ const User = () => {
     }
   }, [darkTheme]);
 
-  console.log(background);
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        buttonRef.current &&
+        !buttonRef.current.contains(event.target as Node)
+      ) {
+        setOpenLinkModal(false);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, []);
+
+  // console.log(background);
+  // console.log(layout);
 
   return (
     <>
@@ -331,6 +365,10 @@ const User = () => {
           setAvatar={setAvatar}
           background={background}
           setBackground={setBackground}
+          uploaded={avatarUploaded}
+          setUploaded={setAvatarUploaded}
+          imageColors={imageColors}
+          setImageColors={setImageColors}
         />
         <GridLayout
           className='flex flex-[2_2_0%] w-full -mt-6'
@@ -361,29 +399,25 @@ const User = () => {
               }}
               onMouseLeave={handleContainerMouseLeave}
             >
-              <div className='border-2 rounded-3xl border-gray-300 h-full w-full px-3 py-3  '>
+              <div className='border-2 rounded-3xl border-gray-300 h-full w-full px-3 py-3'>
                 <div className='textarea-container '>
-                  <textarea
-                    placeholder={item.text}
-                    onChange={(e) =>
-                      setLayout((prevLayout) =>
-                        prevLayout.map((prevItem) =>
-                          prevItem.i === item.i
-                            ? { ...prevItem, text: e.target.value }
-                            : prevItem
-                        )
-                      )
-                    }
-                    className='rounded-2xl px-2 py-2 outline-none hover:bg-gray-400 text-black h-full w-full overflow-hidden resize-none text-xl'
-                    style={{
-                      backgroundColor: item.background,
-                      textAlign: item.textAlignment,
-                    }}
-                    onMouseDown={(e) => e.stopPropagation()}
-                    onMouseUp={(e) => {
-                      e.stopPropagation();
-                    }}
-                  />
+                  {item.type === 'Add Note' && (
+                    <TextArea item={item} setLayout={setLayout} />
+                  )}
+                  {item.type === 'image' && (
+                    <ImageLayout
+                      layoutImage={item.layoutImage}
+                      onChangeLayoutImage={(newLayoutImage) => {
+                        console.log(
+                          'onChangeLayoutImage called with newLayoutImage:',
+                          newLayoutImage
+                        );
+
+                        handleChangeLayoutImage(item.i, newLayoutImage);
+                      }}
+                    />
+                  )}
+                  {item.type === 'link' && <SocialLink link={item.link} />}
                 </div>
                 {hoveredItem === item.i && (
                   <>
@@ -400,6 +434,7 @@ const User = () => {
                         </button>
                       </div>
                     </div>
+
                     <div className='absolute -bottom-8 cursor-default left-0 w-full flex items-center justify-center'>
                       <div className='flex px-4 items-center justify-center w-fit bg-black py-2 gap-1 rounded-lg '>
                         {buttons.map((button) => (
@@ -426,19 +461,24 @@ const User = () => {
                             {button.icon}
                           </div>
                         ))}
-                        <span className='h-3 bg-gray-600 w-[1px] ml-1'></span>
-                        <div className='text-white  w-[24px] h-[24px] items-center flex justify-center rounded-sm relative'>
-                          <button onClick={() => handleShowSubMenu(item.i)}>
-                            <BsThreeDots size={18} />
-                          </button>
-                        </div>
-                        {showMenu && (
-                          <Menu
-                            key={item.i}
-                            item={item}
-                            handleAlignmentChange={handleAlignmentChange}
-                            handleBackgroundChange={handleBackgroundChange}
-                          />
+                        {item.type === 'Add Note' && (
+                          <>
+                            <span className='h-3 bg-gray-600 w-[1px] ml-1'></span>
+
+                            <div className='text-white  w-[24px] h-[24px] items-center flex justify-center rounded-sm relative'>
+                              <button onClick={() => handleShowSubMenu(item.i)}>
+                                <BsThreeDots size={18} />
+                              </button>
+                            </div>
+                            {showMenu && (
+                              <Menu
+                                key={item.i}
+                                item={item}
+                                handleAlignmentChange={handleAlignmentChange}
+                                handleBackgroundChange={handleBackgroundChange}
+                              />
+                            )}
+                          </>
                         )}
                       </div>
                     </div>
@@ -449,37 +489,35 @@ const User = () => {
           ))}
         </GridLayout>
       </div>
-      <div className='w-full gap-2 flex fixed bottom-4 left-6 right-0 mt-2'>
+      <div className='w-full gap-5 flex fixed bottom-4 left-6 right-0 mt-2'>
         <button
           className='bg-gray-600 text-white rounded-lg px-2 py-1 '
           onClick={() => signOut()}
         >
           Logout
         </button>
+
         <button
-          className='bg-green-400 text-white rounded-lg px-2 py-1 '
-          onClick={handleAddItem}
+          className='bg-white text-black border border-black rounded-lg px-2 py-1 '
+          onClick={() => handleAddItem('Add Note', '')}
         >
           Add Text
         </button>
         <button
-          className='bg-green-400 text-white rounded-lg px-2 py-1 '
-          onClick={handleAddItem}
+          ref={buttonRef}
+          className='bg-black text-white rounded-lg px-2 py-1 relative'
+          onClick={() => setOpenLinkModal(!openLinkModal)}
+        >
+          Add Link
+          {openLinkModal && <LinkModal handleAddItem={handleAddItem} />}
+        </button>
+        <button
+          className='bg-blue-800 text-white rounded-lg px-2 py-1 relative'
+          onClick={() => handleAddItem('image', '')}
         >
           Add Image
         </button>
-        <button
-          className='bg-black text-white rounded-lg px-2 py-1 '
-          onClick={handleAddItem}
-        >
-          Add Link
-        </button>
-        <button
-          className='bg-black text-white rounded-lg px-2 py-1 '
-          // onClick={CaptureImage}
-        >
-          Capture{' '}
-        </button>
+
         <button
           className='bg-green-400 text-white rounded-lg px-2 py-1 '
           onClick={handleSaveAndCapture}
@@ -489,6 +527,14 @@ const User = () => {
       </div>
     </>
   );
+};
+
+export const getServerSideProps: GetServerSideProps = async (context) => {
+  const { id } = context.query;
+  const res = await fetch(`http://localhost:3000/api/user/${id}`);
+  const data = await res.json();
+
+  return { props: { data } };
 };
 
 export default User;

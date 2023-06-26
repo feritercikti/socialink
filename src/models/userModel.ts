@@ -46,6 +46,18 @@ const layoutSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  type: {
+    type: String,
+    required: true,
+  },
+  link: {
+    type: String,
+    required: true,
+  },
+  layoutImage: {
+    type: String,
+    required: true,
+  },
 });
 
 const userSchema = new mongoose.Schema(
@@ -75,9 +87,17 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    avatarUploaded: {
+      type: Boolean,
+      default: false,
+    },
     cover: {
       type: String,
       default: '',
+    },
+    imageColors: {
+      type: Array,
+      default: [],
     },
     layout: [layoutSchema],
   },

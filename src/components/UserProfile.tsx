@@ -50,8 +50,8 @@ const UserProfile = ({ name, background, bio, avatar }: UserProfileProps) => {
           </div>
         </div>
         <div className='w-full items-center justify-center mt-4 flex flex-col gap-5 ml-2'>
-          <h1>{name}</h1>
-          <h1>{bio}</h1>
+          <h1 className='text-3xl'>{name}</h1>
+          <p className='text-md'>{bio}</p>
         </div>
         {showButton && (
           <div className='flex justify-center m-2'>

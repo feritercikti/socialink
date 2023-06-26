@@ -54,18 +54,6 @@ const Menu = ({
       id: 'luAlignRight',
       icon: <LuAlignRight size={18} />,
     },
-    {
-      id: 'luAlignVerticalJustifyStart',
-      icon: <LuAlignVerticalJustifyStart size={18} />,
-    },
-    {
-      id: 'luAlignVerticalJustifyCenter',
-      icon: <LuAlignVerticalJustifyCenter size={18} />,
-    },
-    {
-      id: 'luAlignVerticalJustifyEnd',
-      icon: <LuAlignVerticalJustifyEnd size={18} />,
-    },
   ];
 
   return (

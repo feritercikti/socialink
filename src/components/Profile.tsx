@@ -4,16 +4,21 @@ import React, { useState, useEffect, useContext } from 'react';
 import { BsArrowUpCircle } from 'react-icons/bs';
 import { extractColors } from 'extract-colors';
 import { ThemeContext } from '@/ThemeContext';
+import { useRouter } from 'next/router';
 
 interface ProfileProps {
   name: string;
   bio: string;
   avatar: string;
+  uploaded: boolean;
   background: string;
+  imageColors: string[];
   setBackground: React.Dispatch<React.SetStateAction<string>>;
   setAvatar: React.Dispatch<React.SetStateAction<string>>;
+  setUploaded: React.Dispatch<React.SetStateAction<boolean>>;
   setName: React.Dispatch<React.SetStateAction<string>>;
   setBio: React.Dispatch<React.SetStateAction<string>>;
+  setImageColors: React.Dispatch<React.SetStateAction<string[]>>;
 }
 
 const Profile = ({
@@ -23,16 +28,20 @@ const Profile = ({
   setBio,
   avatar,
   setAvatar,
+  uploaded,
+  setUploaded,
   background,
   setBackground,
+  imageColors,
+  setImageColors,
 }: ProfileProps) => {
-  const [avatarName, setAvatarName] = useState('');
   const [uploadStatus, setUploadStatus] = useState('Upload');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [uploaded, setUploaded] = useState(false);
-  const [imageColors, setImageColors] = useState<string[]>([]);
 
   const { darkTheme } = useContext(ThemeContext);
+
+  const router = useRouter();
+  const { id } = router.query;
 
   const lastElementColor = darkTheme ? '#1f1f1f' : 'white';
 
@@ -42,7 +51,6 @@ const Profile = ({
     const file = event.target.files && event.target.files[0];
     if (file) {
       setAvatar(URL.createObjectURL(file));
-      setAvatarName(file.name);
       setSelectedFile(file);
     }
   };
@@ -55,44 +63,53 @@ const Profile = ({
 
     try {
       const response = await axios.post('/api/upload', formData);
-      console.log(response.data);
       let imageUrl = response.data.imageUrl;
       setAvatar(imageUrl);
-      extractColors(avatar)
-        .then((colors) => {
-          const colorHexValues = colors.map((color) => color.hex);
-          setImageColors(colorHexValues);
-        })
-        .catch((error) => {
-          console.error('Color extraction failed:', error);
-        });
+
+      // Extract colors and wait for the result
+      const colors = await extractColors(avatar);
+      const colorHexValues = colors.map((color) => color.hex);
+      setImageColors(colorHexValues);
+
+      // Send the image URL and colors to the server
+      const userData = {
+        id: id,
+        avatar: imageUrl,
+        imageColors: colorHexValues,
+      };
+      const saveResponse = await axios.put('/api/user', userData);
+      console.log('Image saved:', saveResponse.data);
+
       setUploaded(true);
     } catch (error) {
       console.log('imageUpload' + error);
       setUploadStatus('Upload failed..');
     }
-    setUploadStatus('Upload');
+    setUploadStatus('Uploaded');
   };
 
   const handleDeleteImage = () => {
     setAvatar('');
     setBackground('');
+    setUploaded(false);
+    setUploadStatus('Upload');
+    setImageColors([]);
   };
 
   useEffect(() => {
     if (!avatar) {
       setBackground('');
-      setImageColors([]);
       setUploaded(false);
+      setImageColors([]);
+      setUploadStatus('Upload');
     }
   }, [avatar]);
 
   useEffect(() => {
-    setBackground(background); // Call the callback function to update the background in the parent component
+    setBackground(background);
   }, [background]);
 
-  // console.log(background);
-  // console.log(name);
+  console.log(imageColors);
 
   return (
     <div className='flex flex-1 mt-3 flex-col items-center  gap-5 w-full h-[calc(100vh-80px)] sticky top-0 '>
@@ -112,7 +129,7 @@ const Profile = ({
                 : ' border  py-16 px-12 bg-gray-300  '
             } rounded-lg hover:bg-gray-200`}
           >
-            {uploaded ? (
+            {avatar ? (
               <>
                 <div className='relative rounded-lg overflow-hidden '>
                   <Image
@@ -122,39 +139,44 @@ const Profile = ({
                     height={200}
                     className='h-full rounded-[50%] border-2 border-gray-300'
                   />
-                  {uploaded && (
-                    <div className='absolute inset-0 hover:bg-gray-300 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center'>
-                      <button
-                        className='flex justify-center items-center text-blue-900  px-2 py-4 rounded-[50%] bg-white cursor-pointer'
-                        onClick={() => setAvatar('')}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  )}
+
+                  <div className='absolute inset-0 hover:bg-gray-300 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center'>
+                    <button
+                      className='flex justify-center items-center text-blue-900  px-2 py-4 rounded-[50%] bg-white cursor-pointer'
+                      onClick={handleDeleteImage}
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </div>
+                {!uploaded && (
+                  <button
+                    className='px-2 py-1 bg-green-800 text-white rounded-lg'
+                    onClick={uploadImage}
+                  >
+                    {uploadStatus}
+                  </button>
+                )}
               </>
             ) : (
               <>
-                <label
-                  htmlFor='avatarInput'
-                  className='items-center justify-center flex flex-col cursor-pointer'
-                >
-                  {avatar ? (
-                    <button
-                      className='px-2 py-1 bg-green-800 text-white rounded-lg'
-                      onClick={uploadImage}
+                {!uploaded && (
+                  <>
+                    <label
+                      htmlFor='avatarInput'
+                      className='items-center justify-center flex flex-col cursor-pointer'
                     >
-                      {uploadStatus}
-                    </button>
-                  ) : (
-                    <>
-                      <BsArrowUpCircle className='text-[24px] text-gray-400 ' />
-                      <h2 className='text-[16px] text-gray-600 font-bold'></h2>
-                      Add Avatar
-                    </>
-                  )}
-                </label>
+                      {!uploaded && !avatar && (
+                        <>
+                          <BsArrowUpCircle className='text-[24px] text-gray-400 ' />
+                          <h2 className='text-[16px] text-gray-600 font-bold'></h2>
+                          Add Avatar
+                        </>
+                      )}
+                    </label>
+                  </>
+                )}
+
                 <input
                   id='avatarInput'
                   type='file'
@@ -162,24 +184,13 @@ const Profile = ({
                   onChange={handleAvatarChange}
                   style={{ display: 'none' }}
                 />
-                {avatar && (
-                  <div className='flex flex-col items-center'>
-                    <p>Selected avatar:</p>
-                    <p>{avatarName}</p>
-                    <div
-                      className='text-red-800 bold px-2 py-1 mt-1 bg-red-200 cursor-pointer rounded-lg'
-                      onClick={handleDeleteImage}
-                    >
-                      X
-                    </div>
-                  </div>
-                )}
               </>
             )}
           </div>
         </div>
         <div className='w-full items-center justify-center mt-4 flex flex-col gap-5 ml-2'>
           <input
+            value={name}
             type='text'
             placeholder='Your Name'
             className={`${
@@ -190,6 +201,7 @@ const Profile = ({
             onChange={(e) => setName(e.target.value)}
           />
           <textarea
+            value={bio}
             placeholder='Your bio'
             className={`${
               darkTheme
@@ -200,7 +212,7 @@ const Profile = ({
           />
         </div>
         <div className='image-colors flex items-center justify-center gap-2'>
-          {imageColors.map((color, index) => (
+          {imageColors?.map((color, index) => (
             <div
               key={index}
               className='w-[36px] h-[36px] cursor-pointer'
@@ -212,6 +224,10 @@ const Profile = ({
             <div
               className='w-[60px] h-[36px] bg-white border border-black cursor-pointer flex items-center justify-center '
               onClick={() => setBackground('')}
+              style={{
+                color: 'black',
+                border: '1px solid black',
+              }}
             >
               Default
             </div>

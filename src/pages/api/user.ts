@@ -9,29 +9,54 @@ export default async function handler(
   await dbConnect();
 
   try {
-    if (req.method !== 'POST') {
-      return res.status(405).json({ message: 'Method Not Allowed' });
+    if (req.method == 'POST') {
+      const {
+        id,
+        name,
+        bio,
+        background,
+        avatar,
+        avatarUploaded,
+        imageColors,
+        cover,
+        layout,
+      } = req.body;
+
+      const existingUser = await User.findById(id);
+
+      if (existingUser) {
+        existingUser.name = name;
+        existingUser.bio = bio;
+        existingUser.avatar = avatar;
+        existingUser.avatarUploaded = avatarUploaded;
+        existingUser.imageColors = imageColors;
+        existingUser.background = background;
+        existingUser.cover = cover;
+        existingUser.layout = layout;
+
+        await existingUser.save();
+
+        return res
+          .status(200)
+          .json({ message: 'User information updated successfully' });
+      }
     }
+    if (req.method === 'PUT') {
+      const { id, avatar, imageColors } = req.body;
 
-    const { id, name, bio, background, avatar, cover, layout } = req.body;
+      const existingUser = await User.findByIdAndUpdate(id, {
+        avatar,
+        imageColors,
+      });
 
-    const existingUser = await User.findById(id);
-
-    if (existingUser) {
-      existingUser.name = name;
-      existingUser.bio = bio;
-      existingUser.avatar = avatar;
-      existingUser.background = background;
-      existingUser.cover = cover;
-      existingUser.layout = layout;
-
-      await existingUser.save();
-
-      return res
-        .status(200)
-        .json({ message: 'User information updated successfully' });
-    } else {
-      return res.status(404).json({ message: 'User not found' });
+      if (existingUser) {
+        return res.status(200).json({
+          message: 'User information updated successfully',
+          user: existingUser,
+        });
+      } else {
+        return res.status(404).json({ message: 'User not found' });
+      }
     }
   } catch (error) {
     console.error(error);

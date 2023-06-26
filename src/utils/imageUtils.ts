@@ -18,9 +18,9 @@ export const CaptureImage = (containerRef: HTMLDivElement) => {
     try {
       // Capture only the visible part of the screen
       const canvas = await html2canvas(containerRef!, {
-        width: window.innerWidth * window.devicePixelRatio,
-        height: window.innerHeight * window.devicePixelRatio,
-        scale: window.devicePixelRatio, // Adjust the scale to capture at higher resolution
+        width: window.innerWidth,
+        height: window.innerHeight,
+        scale: 1, // Adjust the scale to capture at higher resolution
       });
 
       canvas.toBlob(async (blob) => {
