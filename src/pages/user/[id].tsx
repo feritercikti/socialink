@@ -1,12 +1,11 @@
 import React, { useEffect } from 'react';
-import { useState, useCallback, useContext, useRef } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import GridLayout, { Layout } from 'react-grid-layout';
 import Profile from '@/components/Profile';
 import { AiOutlineDelete } from 'react-icons/ai';
 import { BiRectangle } from 'react-icons/bi';
 import { LuRectangleHorizontal, LuRectangleVertical } from 'react-icons/lu';
 import { BsThreeDots } from 'react-icons/bs';
-import { ThemeContext } from '@/ThemeContext';
 import Menu from '@/components/Menu';
 import axios from 'axios';
 import { signOut } from 'next-auth/react';
@@ -63,9 +62,9 @@ const User = ({ data }: { data: User }) => {
   const [draggingItem, setDraggingItem] = useState<string | null>(null);
   const [showMenu, setShowMenu] = useState(false);
   const [openSubMenu, setOpenSubMenu] = useState<string | null>(null);
-  const [name, setName] = useState(data.name);
-  const [bio, setBio] = useState(data.bio);
-  const [avatar, setAvatar] = useState(data.avatar);
+  const [name, setName] = useState<string>(data.name);
+  const [bio, setBio] = useState<string>(data.bio);
+  const [avatar, setAvatar] = useState<string>(data.avatar);
   const [avatarUploaded, setAvatarUploaded] = useState(data.avatarUploaded);
   const [imageColors, setImageColors] = useState<string[]>(data.imageColors);
   const [openLinkModal, setOpenLinkModal] = useState(false);
@@ -76,16 +75,10 @@ const User = ({ data }: { data: User }) => {
   );
   const [saveStatus, setSaveStatus] = useState('Save');
 
-  const { darkTheme, toggleDarkTheme } = useContext(ThemeContext);
-
   const buttonsContainerRef = useRef<HTMLDivElement>(null);
 
   const router = useRouter();
   const { id } = router.query;
-
-  const handleToggleTheme = () => {
-    toggleDarkTheme();
-  };
 
   const handleAddItem = (type: string, link?: string, layoutImage?: string) => {
     const newItem = {
@@ -102,7 +95,9 @@ const User = ({ data }: { data: User }) => {
       text: 'Add Note',
       type: type,
       link: link || 'link',
-      layoutImage: layoutImage || '',
+      layoutImage:
+        layoutImage ||
+        'https://images.pexels.com/photos/2770371/pexels-photo-2770371.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500',
     };
 
     setLayout((prevLayout) => [...prevLayout, newItem]);
@@ -112,8 +107,6 @@ const User = ({ data }: { data: User }) => {
   };
 
   const handleChangeLayoutImage = (itemId: string, newLayoutImage: string) => {
-    console.log('handleChangeLayoutImage called with itemId:', itemId);
-    console.log('newLayoutImage:', newLayoutImage);
     setLayout((prevLayout) =>
       prevLayout.map((item) =>
         item.i === itemId ? { ...item, layoutImage: newLayoutImage } : item
@@ -312,17 +305,6 @@ const User = ({ data }: { data: User }) => {
   };
 
   useEffect(() => {
-    const body = document.querySelector('body');
-    if (body) {
-      if (darkTheme) {
-        body.classList.add('dark-theme');
-      } else {
-        body.classList.remove('dark-theme');
-      }
-    }
-  }, [darkTheme]);
-
-  useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
         buttonRef.current &&
@@ -339,19 +321,8 @@ const User = ({ data }: { data: User }) => {
     };
   }, []);
 
-  // console.log(background);
-  // console.log(layout);
-
   return (
     <>
-      <div className='flex items-end  justify-end mr-6 mt-2'>
-        <button
-          className='px-2 py-1 bg-gray-500 rounded-lg text-white'
-          onClick={handleToggleTheme}
-        >
-          {darkTheme ? 'Light' : 'Dark'}
-        </button>
-      </div>
       <div
         className='mt-6 mx-12 mb-12 flex justify-center'
         ref={buttonsContainerRef}
@@ -386,7 +357,7 @@ const User = ({ data }: { data: User }) => {
           }}
           useCSSTransforms={false}
         >
-          {layout.map((item) => (
+          {layout?.map((item) => (
             <div
               key={item.i}
               className={`rounded-3xl cursor-grab relative ${
@@ -400,7 +371,7 @@ const User = ({ data }: { data: User }) => {
               onMouseLeave={handleContainerMouseLeave}
             >
               <div className='border-2 rounded-3xl border-gray-300 h-full w-full px-3 py-3'>
-                <div className='textarea-container '>
+                <div className='container '>
                   {item.type === 'Add Note' && (
                     <TextArea item={item} setLayout={setLayout} />
                   )}
@@ -408,11 +379,6 @@ const User = ({ data }: { data: User }) => {
                     <ImageLayout
                       layoutImage={item.layoutImage}
                       onChangeLayoutImage={(newLayoutImage) => {
-                        console.log(
-                          'onChangeLayoutImage called with newLayoutImage:',
-                          newLayoutImage
-                        );
-
                         handleChangeLayoutImage(item.i, newLayoutImage);
                       }}
                     />
@@ -422,13 +388,7 @@ const User = ({ data }: { data: User }) => {
                 {hoveredItem === item.i && (
                   <>
                     <div className='absolute -top-4 -left-4 cursor-pointer'>
-                      <div
-                        className={`${
-                          darkTheme
-                            ? 'bg-black border-none hover:bg-gray-600'
-                            : 'bg-white border border-gray-200 hover:bg-gray-200'
-                        }  w-[36px] h-[36px] rounded-[50%] flex items-center justify-center`}
-                      >
+                      <div className='bg-white border border-gray-200 hover:bg-gray-200 w-[36px] h-[36px] rounded-[50%] flex items-center justify-center'>
                         <button onClick={() => handleDeleteItem(item.i)}>
                           <AiOutlineDelete className='text-[18px]' />
                         </button>
@@ -496,7 +456,12 @@ const User = ({ data }: { data: User }) => {
         >
           Logout
         </button>
-
+        <button
+          className='bg-teal-600 text-white rounded-lg px-2 py-1 '
+          onClick={() => router.push('/community')}
+        >
+          Community
+        </button>
         <button
           className='bg-white text-black border border-black rounded-lg px-2 py-1 '
           onClick={() => handleAddItem('Add Note', '')}

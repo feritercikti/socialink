@@ -20,16 +20,13 @@ const Register = () => {
         password,
       });
       if (!data.success) {
-        // User already exists, set the warning message
         toast.error(data.message);
       } else {
-        // User created successfully, redirect to the login page
         router.push('/login/');
       }
     } catch (error) {
       console.log(error);
     }
-    // Reset the form
     setEmail('');
     setPassword('');
   };

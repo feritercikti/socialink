@@ -14,7 +14,7 @@ const ImageLayout = ({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isHovered, setIsHovered] = useState(false);
   const [uploadStatus, setUploadStatus] = useState('Upload');
-  const [image, setImage] = useState(layoutImage || '/default.jpeg');
+  const [image, setImage] = useState(layoutImage);
 
   const handleImageChange = async (
     event: React.ChangeEvent<HTMLInputElement>
@@ -43,7 +43,7 @@ const ImageLayout = ({
     }
   };
 
-  // console.log(image);
+  console.log(image);
 
   return (
     <div
@@ -52,11 +52,17 @@ const ImageLayout = ({
       onMouseLeave={() => setIsHovered(false)}
     >
       <Image
-        src={selectedFile ? URL.createObjectURL(selectedFile) : image}
+        src={selectedFile ? URL.createObjectURL(selectedFile) : image!}
         alt='layout-image'
         fill={true}
         className={`rounded-xl ${isHovered ? 'opacity-50' : ''}`}
       />
+      {/* <img
+        src={selectedFile ? URL.createObjectURL(selectedFile) : image}
+        alt='layout-image'
+        className={`rounded-xl h-fit ${isHovered ? 'opacity-50' : ''}`}
+      /> */}
+
       {isHovered && (
         <div className='absolute inset-0 flex items-center justify-center'>
           {selectedFile ? (

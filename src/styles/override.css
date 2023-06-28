@@ -5,14 +5,14 @@
   @apply hidden;
 }
 
-.textarea-container {
+.container {
   @apply w-full h-full;
 }
 /* .textarea-container.hovered textarea {
   @apply bg-gray-100 w-full h-full;
 } */
 
-.textarea-container.center {
+.container.center {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -21,4 +21,9 @@
 body.dark-theme {
   background-color: #1f1f1f;
   color: #ffffff;
+}
+
+.text-orientation {
+  writing-mode: vertical-rl;
+  text-orientation: upright;
 }

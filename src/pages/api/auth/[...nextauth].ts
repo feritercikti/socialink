@@ -32,10 +32,9 @@ export default NextAuth({
           throw new Error('Invalid Email or Password');
         }
 
-        // return user;
         return {
           ...user.toJSON(),
-          id: user._id, // Use user._id instead of user.id
+          id: user._id,
         };
       },
     }),

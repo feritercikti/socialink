@@ -1,7 +1,6 @@
 import axios from 'axios';
 import Image from 'next/image';
 import React, { useContext } from 'react';
-import { ThemeContext } from '@/ThemeContext';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
 
@@ -13,7 +12,6 @@ interface UserProfileProps {
 }
 
 const UserProfile = ({ name, background, bio, avatar }: UserProfileProps) => {
-  const { darkTheme } = useContext(ThemeContext);
   const session = useSession();
 
   const router = useRouter();
@@ -21,15 +19,13 @@ const UserProfile = ({ name, background, bio, avatar }: UserProfileProps) => {
 
   const showButton = session?.data?.id === id;
 
-  const lastElementColor = darkTheme ? '#1f1f1f' : 'white';
-
   return (
-    <div className='flex flex-1 mt-3 flex-col items-center  gap-5 w-full h-[calc(100vh-80px)] sticky top-0 '>
+    <div className='flex flex-1 mt-3 flex-col items-center  gap-5 w-full h-[calc(100vh-80px)] sticky top-0  '>
       <div
-        className='w-[80%] rounded-3xl h-full'
+        className='w-[80%] rounded-3xl h-full max-[768px]:w-[86%]'
         style={{
           backgroundImage: background
-            ? `linear-gradient(to bottom,  ${background},${lastElementColor})`
+            ? `linear-gradient(to bottom,  ${background},white)`
             : 'none',
         }}
       >
@@ -55,7 +51,10 @@ const UserProfile = ({ name, background, bio, avatar }: UserProfileProps) => {
         </div>
         {showButton && (
           <div className='flex justify-center m-2'>
-            <button className='bg-green-700 px-4 py-1 rounded-lg hover:bg-green-800 text-white'>
+            <button
+              className='bg-green-700 px-4 py-1 rounded-lg hover:bg-green-800 text-white'
+              onClick={() => router.push(`/user/${session.data?.id}`)}
+            >
               Edit
             </button>
           </div>

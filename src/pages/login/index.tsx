@@ -21,31 +21,24 @@ const Login = () => {
         redirect: true,
         email,
         password,
+        callbackUrl: '/community',
       });
     } catch (error) {
       console.log(error);
     }
   };
 
+  useEffect(() => {
+    if (session) {
+      router.push('/community');
+    }
+  }, [session, router]);
+
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
 
-  useEffect(() => {
-    setTimeout(() => {
-      if (session) {
-        router.replace(`/user/${session.id}`);
-      }
-    }, 1000);
-  }, [router, session]);
-
-  if (session) {
-    return <div>You are Redirecting</div>;
-  }
-
-  return status === 'loading' ? (
-    <div></div>
-  ) : (
+  return (
     <div className='flex items-center justify-center min-h-screen bg-gray-100'>
       <div className='max-w-md w-full px-6 py-8 bg-white rounded-lg shadow-md'>
         <h2 className='text-2xl font-semibold text-center text-gray-800 mb-6'>
@@ -134,7 +127,6 @@ const Login = () => {
           </div>
         </form>
       </div>
-      <ToastContainer position='top-center' autoClose={3000} />
     </div>
   );
 };

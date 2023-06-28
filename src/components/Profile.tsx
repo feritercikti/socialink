@@ -1,9 +1,8 @@
 import axios from 'axios';
 import Image from 'next/image';
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BsArrowUpCircle } from 'react-icons/bs';
 import { extractColors } from 'extract-colors';
-import { ThemeContext } from '@/ThemeContext';
 import { useRouter } from 'next/router';
 
 interface ProfileProps {
@@ -38,12 +37,8 @@ const Profile = ({
   const [uploadStatus, setUploadStatus] = useState('Upload');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-  const { darkTheme } = useContext(ThemeContext);
-
   const router = useRouter();
   const { id } = router.query;
-
-  const lastElementColor = darkTheme ? '#1f1f1f' : 'white';
 
   const handleAvatarChange = async (
     event: React.ChangeEvent<HTMLInputElement>
@@ -117,14 +112,14 @@ const Profile = ({
         className='w-[80%] rounded-3xl h-full'
         style={{
           backgroundImage: background
-            ? `linear-gradient(to bottom,  ${background},${lastElementColor})`
+            ? `linear-gradient(to bottom,  ${background},white)`
             : 'none',
         }}
       >
         <div className='flex border-gray-300 mt-10 w-full items-center justify-center'>
           <div
             className={`flex flex-col -mt-9 w-fit ${
-              uploaded
+              avatar
                 ? `bg-${background} h-[200px] `
                 : ' border  py-16 px-12 bg-gray-300  '
             } rounded-lg hover:bg-gray-200`}
@@ -149,10 +144,11 @@ const Profile = ({
                     </button>
                   </div>
                 </div>
-                {!uploaded && (
+                {selectedFile && !uploaded && (
                   <button
                     className='px-2 py-1 bg-green-800 text-white rounded-lg'
                     onClick={uploadImage}
+                    disabled={uploaded ? true : false}
                   >
                     {uploadStatus}
                   </button>
@@ -193,21 +189,17 @@ const Profile = ({
             value={name}
             type='text'
             placeholder='Your Name'
-            className={`${
-              darkTheme
-                ? 'text-white placeholder-white'
-                : 'text-black placeholder-black'
-            } w-[60%]  text-[24px] px-2 rounded-xl outline-none flex items-center justify-center  break-words bg-transparent `}
+            className='
+                text-black placeholder-black
+            } w-[60%]  text-[24px] px-2 rounded-xl outline-none flex items-center justify-center  break-words bg-transparent'
             onChange={(e) => setName(e.target.value)}
           />
           <textarea
             value={bio}
             placeholder='Your bio'
-            className={`${
-              darkTheme
-                ? 'text-white placeholder-white'
-                : 'text-black placeholder-black'
-            } w-[60%] text-[18px] px-2 rounded-xl  h-[120px] break-words resize-none outline-none bg-transparent `}
+            className='
+              text-black placeholder-black
+           w-[60%] text-[18px] px-2 rounded-xl  h-[120px] break-words resize-none outline-none bg-transparent '
             onChange={(e) => setBio(e.target.value)}
           />
         </div>
@@ -220,7 +212,7 @@ const Profile = ({
               onClick={() => setBackground(color)}
             ></div>
           ))}
-          {uploaded && (
+          {avatar && (
             <div
               className='w-[60px] h-[36px] bg-white border border-black cursor-pointer flex items-center justify-center '
               onClick={() => setBackground('')}

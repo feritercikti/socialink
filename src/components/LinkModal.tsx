@@ -8,28 +8,29 @@ const LinkModal = ({ handleAddItem }: LinkModalProps) => {
   const [link, setLink] = useState('');
 
   const handlePaste = () => {
-    const instagramRegex = /instagram\.com\/(\w+)/;
-    const linkedinRegex = /linkedin\.com\/(\w+)/;
-    const facebookRegex = /facebook\.com\/(\w+)/;
-    const twitterRegex = /twitter\.com\/(\w+|\W+)/;
-    const figmaRegex = /figma\.com\/(.+)/;
-    const behanceRegex = /behance\.com\/(.+)/;
+    const linkTypeRegex: { [key: string]: RegExp } = {
+      instagram: /instagram\.com/,
+      linkedin: /linkedin\.com/,
+      facebook: /facebook\.com/,
+      twitter: /twitter\.com/,
+      figma: /figma\.com/,
+      behance: /behance\.com/,
+      spotify: /spotify\.com/,
+      twitch: /twitch\.tv/,
+      youtube: /youtube\.com/,
+      github: /github\.com/,
+      telegram: /telegram\.me/,
+    };
 
     let type = 'link';
     let parsedLink = '';
 
-    if (instagramRegex.test(link)) {
-      parsedLink = link;
-    } else if (facebookRegex.test(link)) {
-      parsedLink = link;
-    } else if (linkedinRegex.test(link)) {
-      parsedLink = link;
-    } else if (twitterRegex.test(link)) {
-      parsedLink = link;
-    } else if (figmaRegex.test(link)) {
-      parsedLink = link;
-    } else if (behanceRegex.test(link)) {
-      parsedLink = link;
+    for (const linkType in linkTypeRegex) {
+      const regex = linkTypeRegex[linkType as keyof typeof linkTypeRegex];
+      if (regex.test(link)) {
+        parsedLink = link;
+        break;
+      }
     }
 
     handleAddItem(type, parsedLink);
@@ -46,8 +47,6 @@ const LinkModal = ({ handleAddItem }: LinkModalProps) => {
     e.stopPropagation();
     handlePaste();
   };
-
-  console.log(link);
 
   return (
     <div

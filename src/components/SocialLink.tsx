@@ -1,29 +1,16 @@
 import Link from 'next/link';
 import React from 'react';
 import { SocialIcon } from 'react-social-icons';
+import { getUsernameFromLink, getNetworkName } from './../utils/linkUtils';
 
 interface SocialLinkProps {
   link?: string;
 }
 
 const SocialLink = ({ link }: SocialLinkProps) => {
-  const getUsernameFromLink = () => {
-    const usernameRegex = /\/([^/]+)\/?$/;
-    const match = link!.match(usernameRegex);
-    return match ? match[1] : '';
-  };
+  const headerText = getUsernameFromLink(link);
 
-  const headerText = getUsernameFromLink();
-
-  const getNetworkName = () => {
-    const networkRegex = /(https?:\/\/)?(www\.)?([^/]+)\//;
-    const match = link!.match(networkRegex);
-    const domain = match ? match[3] : '';
-    const networkName = domain.replace(/\.(com|co\.uk|io)$/, '');
-    return networkName;
-  };
-
-  const networkName = getNetworkName();
+  const networkName = getNetworkName(link);
   const updatedLink = link!.replace('http://localhost:3000/user', '');
 
   return (
