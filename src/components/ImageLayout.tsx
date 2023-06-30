@@ -17,7 +17,6 @@ const ImageLayout = ({
   const [isHovered, setIsHovered] = useState(false);
   const [uploadStatus, setUploadStatus] = useState('Upload');
   const [image, setImage] = useState(layoutImage!);
-  const [uploaded, setUploaded] = useState(false);
 
   const handleImageChange = async (
     event: React.ChangeEvent<HTMLInputElement>
@@ -38,14 +37,11 @@ const ImageLayout = ({
       const imageUrl = response.data.imageUrl;
       setImage(imageUrl);
       setUploadStatus('Uploaded');
-      setUploaded(true);
       onChangeLayoutImage(id, imageUrl);
     } catch (error) {
       console.log('Image upload error:', error);
     }
   };
-
-  console.log(image);
 
   return (
     <div

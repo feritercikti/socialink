@@ -178,32 +178,29 @@ const User = ({ data }: { data: User }) => {
     }
   };
 
-  const handleDrag = useCallback(
-    (
-      layout: Layout[],
-      oldItem: Layout,
-      newItem: Layout,
-      placeholder: Layout,
-      event: MouseEvent | TouchEvent,
-      element: HTMLElement
-    ) => {
-      // Update the layout state with the new item position
-      setLayout((prevLayout) => {
-        const updatedLayout = prevLayout.map((item) => {
-          if (item.i === newItem.i) {
-            return {
-              ...item,
-              x: newItem.x,
-              y: newItem.y,
-            };
-          }
-          return item;
-        });
-        return updatedLayout;
+  const handleDrag = (
+    layout: Layout[],
+    oldItem: Layout,
+    newItem: Layout,
+    placeholder: Layout,
+    event: MouseEvent | TouchEvent,
+    element: HTMLElement
+  ) => {
+    // Update the layout state with the new item position
+    setLayout((prevLayout) => {
+      const updatedLayout = prevLayout.map((item) => {
+        if (item.i === newItem.i) {
+          return {
+            ...item,
+            x: newItem.x,
+            y: newItem.y,
+          };
+        }
+        return item;
       });
-    },
-    []
-  );
+      return updatedLayout;
+    });
+  };
 
   const buttons = [
     {
@@ -232,7 +229,7 @@ const User = ({ data }: { data: User }) => {
     },
   ];
 
-  const handleSave = async (imageUrl: string) => {
+  const handleSave = async (imageUrl: string, layout: Layout[]) => {
     const data = {
       id: id,
       name: name,
@@ -262,7 +259,7 @@ const User = ({ data }: { data: User }) => {
       const imageUrl = await CaptureImage(buttonsContainerRef.current!);
 
       if (imageUrl!) {
-        await handleSave(imageUrl);
+        await handleSave(imageUrl, layout);
       } else {
         console.error('Error capturing image: imageUrl is null or undefined');
       }
