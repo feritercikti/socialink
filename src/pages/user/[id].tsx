@@ -467,7 +467,7 @@ const User = ({ data }: { data: User }) => {
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
   const { id } = context.query;
-  const res = await fetch(`${process.env.URL}/api/user/${id}`);
+  const res = await fetch(`${process.env.NEXTAUTH_URL}/api/user/${id}`);
   const data = await res.json();
 
   return { props: { data } };

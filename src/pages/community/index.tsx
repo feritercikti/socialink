@@ -84,7 +84,7 @@ const Community = ({ data }: { data: User[] }) => {
 };
 
 export async function getServerSideProps() {
-  const res = await fetch(`${process.env.URL}/api/users`);
+  const res = await fetch(`${process.env.NEXTAUTH_URL}/api/users`);
   const data = await res.json();
 
   return { props: { data } };
