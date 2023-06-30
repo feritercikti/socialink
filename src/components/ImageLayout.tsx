@@ -1,28 +1,29 @@
 import axios from 'axios';
 import Image from 'next/image';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 interface ImageProps {
+  id: number;
   layoutImage?: string;
-  onChangeLayoutImage: (newLayoutImage: string) => void;
+  onChangeLayoutImage: (itemId: number, newLayoutImage: string) => void;
 }
 
 const ImageLayout = ({
+  id,
   layoutImage,
   onChangeLayoutImage,
 }: ImageProps): JSX.Element => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isHovered, setIsHovered] = useState(false);
   const [uploadStatus, setUploadStatus] = useState('Upload');
-  const [image, setImage] = useState(layoutImage);
+  const [image, setImage] = useState(layoutImage!);
+  const [uploaded, setUploaded] = useState(false);
 
   const handleImageChange = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
-    const file = event.target.files && event.target.files[0];
-    if (file) {
-      setSelectedFile(file);
-    }
+    const file = event.target.files?.[0] || null;
+    setSelectedFile(file);
   };
 
   const uploadLayoutImage = async (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -35,9 +36,10 @@ const ImageLayout = ({
     try {
       const response = await axios.post('/api/upload', formData);
       const imageUrl = response.data.imageUrl;
-      onChangeLayoutImage(imageUrl); // Call the onChangeLayoutImage function with the new layout image URL
       setImage(imageUrl);
       setUploadStatus('Uploaded');
+      setUploaded(true);
+      onChangeLayoutImage(id, imageUrl);
     } catch (error) {
       console.log('Image upload error:', error);
     }
@@ -52,16 +54,11 @@ const ImageLayout = ({
       onMouseLeave={() => setIsHovered(false)}
     >
       <Image
-        src={selectedFile ? URL.createObjectURL(selectedFile) : image!}
+        src={selectedFile ? URL.createObjectURL(selectedFile) : image}
         alt='layout-image'
         fill={true}
         className={`rounded-xl ${isHovered ? 'opacity-50' : ''}`}
       />
-      {/* <img
-        src={selectedFile ? URL.createObjectURL(selectedFile) : image}
-        alt='layout-image'
-        className={`rounded-xl h-fit ${isHovered ? 'opacity-50' : ''}`}
-      /> */}
 
       {isHovered && (
         <div className='absolute inset-0 flex items-center justify-center'>
@@ -75,7 +72,7 @@ const ImageLayout = ({
           ) : (
             <label
               className='bg-black text-white px-4 py-2 rounded-lg cursor-pointer'
-              htmlFor='file-input'
+              htmlFor={`file-input-${id}`}
             >
               Choose File
             </label>
@@ -83,7 +80,7 @@ const ImageLayout = ({
         </div>
       )}
       <input
-        id='file-input'
+        id={`file-input-${id}`}
         type='file'
         onChange={handleImageChange}
         style={{ display: 'none' }}

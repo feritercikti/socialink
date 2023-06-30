@@ -17,46 +17,12 @@ import LinkModal from '@/components/LinkModal';
 import TextArea from '@/components/TextArea';
 import SocialLink from '@/components/SocialLink';
 import ImageLayout from '@/components/ImageLayout';
+import { v4 as uuidv4 } from 'uuid';
 
 type TextAlign = 'left' | 'right' | 'center';
 
-const defaultLayout = [
-  {
-    i: 'a',
-    x: 0,
-    y: 0,
-    w: 1,
-    h: 3,
-    minWidth: 1,
-    selectedButton: 'biRectangle',
-    selectedSubButton: 'luAlignLeft',
-    textAlignment: 'left' as TextAlign,
-    background: 'white',
-    text: 'Add Note',
-    type: 'type',
-    link: '',
-    layoutImage: '/default.jpeg',
-  },
-  {
-    i: 'b',
-    x: 1,
-    y: 0,
-    w: 2,
-    h: 2,
-    minWidth: 1,
-    selectedButton: 'luRectangleHorizontal',
-    selectedSubButton: 'luAlignLeft',
-    textAlignment: 'left' as TextAlign,
-    background: 'white',
-    text: 'Add Note',
-    type: 'type',
-    link: '',
-    layoutImage: '/default.jpeg',
-  },
-];
-
 const User = ({ data }: { data: User }) => {
-  const [layout, setLayout] = useState(data.layout || defaultLayout);
+  const [layout, setLayout] = useState(data.layout);
 
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const [draggingItem, setDraggingItem] = useState<string | null>(null);
@@ -82,7 +48,7 @@ const User = ({ data }: { data: User }) => {
 
   const handleAddItem = (type: string, link?: string, layoutImage?: string) => {
     const newItem = {
-      i: `item_${layout.length}`,
+      i: uuidv4(),
       x: 0,
       y: 0,
       w: 1,
@@ -106,12 +72,15 @@ const User = ({ data }: { data: User }) => {
     setLayout((prevLayout) => prevLayout.filter((item) => item.i !== itemId));
   };
 
-  const handleChangeLayoutImage = (itemId: string, newLayoutImage: string) => {
-    setLayout((prevLayout) =>
-      prevLayout.map((item) =>
-        item.i === itemId ? { ...item, layoutImage: newLayoutImage } : item
-      )
-    );
+  const handleChangeLayoutImage = (index: number, newLayoutImage: string) => {
+    setLayout((prevLayout) => {
+      const updatedLayout = [...prevLayout];
+      updatedLayout[index] = {
+        ...updatedLayout[index],
+        layoutImage: newLayoutImage,
+      };
+      return updatedLayout;
+    });
   };
 
   const handleSizeChange = (
@@ -357,7 +326,7 @@ const User = ({ data }: { data: User }) => {
           }}
           useCSSTransforms={false}
         >
-          {layout?.map((item) => (
+          {layout?.map((item, index) => (
             <div
               key={item.i}
               className={`rounded-3xl cursor-grab relative ${
@@ -373,17 +342,19 @@ const User = ({ data }: { data: User }) => {
               <div className='border-2 rounded-3xl border-gray-300 h-full w-full px-3 py-3'>
                 <div className='container '>
                   {item.type === 'Add Note' && (
-                    <TextArea item={item} setLayout={setLayout} />
+                    <TextArea item={item} setLayout={setLayout} key={item.i} />
                   )}
                   {item.type === 'image' && (
                     <ImageLayout
+                      key={item.i}
+                      id={index}
                       layoutImage={item.layoutImage}
-                      onChangeLayoutImage={(newLayoutImage) => {
-                        handleChangeLayoutImage(item.i, newLayoutImage);
-                      }}
+                      onChangeLayoutImage={handleChangeLayoutImage}
                     />
                   )}
-                  {item.type === 'link' && <SocialLink link={item.link} />}
+                  {item.type === 'link' && (
+                    <SocialLink link={item.link} key={item.i} />
+                  )}
                 </div>
                 {hoveredItem === item.i && (
                   <>

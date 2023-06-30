@@ -104,8 +104,6 @@ const Profile = ({
     setBackground(background);
   }, [background]);
 
-  console.log(imageColors);
-
   return (
     <div className='flex flex-1 mt-3 flex-col items-center  gap-5 w-full h-[calc(100vh-80px)] sticky top-0 '>
       <div

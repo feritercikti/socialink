@@ -1,13 +1,15 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextFetchEvent } from 'next/server';
 import { withAuth } from 'next-auth/middleware';
+import { getToken } from 'next-auth/jwt';
 
-export default withAuth(function middleware(request) {
-  if (request.nextUrl.pathname === '/login' && request.nextauth.token) {
-    const userPageUrl = new URL(
-      `/user/${request.nextauth.token.id}`,
-      request.url
+export default withAuth(async function middleware(request) {
+  const token = await getToken({ req: request });
+  const isAuthenticated = !!token;
+
+  if (request.nextUrl.pathname.startsWith('/login') && isAuthenticated) {
+    return NextResponse.redirect(
+      new URL(`/user/${request.nextauth.token?.id}`, request.url)
     );
-    return NextResponse.rewrite(userPageUrl);
   }
 
   if (request.nextUrl.pathname.startsWith('/user/') && request.nextauth.token) {
@@ -20,6 +22,10 @@ export default withAuth(function middleware(request) {
 
       return NextResponse.rewrite(ownPageUrl.href);
     }
+  }
+
+  if (!isAuthenticated) {
+    return NextResponse.redirect(new URL('/login', request.url));
   }
 
   return NextResponse.next();

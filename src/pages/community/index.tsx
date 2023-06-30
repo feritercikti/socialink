@@ -24,10 +24,15 @@ const Community = ({ data }: { data: User[] }) => {
     <div className='flex flex-col items-center  bg-gray-100 h-screen'>
       <div
         className='flex w-full items-center justify-between 
-         px-8 h-12 py-1 mb-6'
+         px-8 h-12 py-1 mb-6 mt-12'
       >
         <div>
-          <button className='hover:text-gray-400'>Home</button>
+          <button
+            className='hover:text-gray-400'
+            onClick={() => router.push('/')}
+          >
+            Home
+          </button>
         </div>
         <div className='flex gap-8'>
           {session.data && (
@@ -46,7 +51,7 @@ const Community = ({ data }: { data: User[] }) => {
           )}
           {!session.data && (
             <button
-              className='hover:text-gray-400'
+              className='hover:bg-[#701a75] bg-[#921e9d] text-white px-5 py-2 rounded-xl'
               onClick={() => router.push('/login')}
             >
               Login
@@ -56,7 +61,7 @@ const Community = ({ data }: { data: User[] }) => {
       </div>
       <h2 className='text-3xl mb-6'>Explore</h2>
       <div className='grid grid-cols-3 gap-14'>
-        {data.map((user) => {
+        {data?.map((user) => {
           if (user.name) {
             return (
               <div
