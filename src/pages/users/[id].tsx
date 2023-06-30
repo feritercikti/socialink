@@ -52,7 +52,9 @@ const UserPage = ({ data }: { data: User }) => {
                       textAlign: item.textAlignment,
                     }}
                   >
-                    {item.type == 'Add Note' && <>{item.text}</>}
+                    {item.type == 'Add Note' && (
+                      <div className='break-words'>{item.text}</div>
+                    )}
                     {item.type === 'image' && (
                       <Image
                         src={item.layoutImage!}
