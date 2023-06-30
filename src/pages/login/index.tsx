@@ -1,7 +1,5 @@
-import axios from 'axios';
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { ToastContainer, toast } from 'react-toastify';
 import { signIn, useSession } from 'next-auth/react';
 import Link from 'next/link';
 
@@ -32,7 +30,7 @@ const Login = () => {
     if (session) {
       router.push('/community');
     }
-  }, [session, router]);
+  }, [session]);
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);

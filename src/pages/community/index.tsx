@@ -60,29 +60,31 @@ const Community = ({ data }: { data: User[] }) => {
         </div>
       </div>
       <h2 className='text-3xl mb-6'>Explore</h2>
-      <div className='grid grid-cols-3 gap-14'>
-        {data?.map((user) => {
-          if (user.name) {
-            return (
-              <div
-                key={user._id}
-                className='border p-3 text-center w-[400px] hover:shadow-lg rounded-lg cursor-pointer'
-              >
-                <Link href={`/users/${user._id}`}>
-                  <img src={user.cover} alt={user.name} />
-                </Link>
-              </div>
-            );
-          }
-          return null;
-        })}
+      <div>
+        <div className='grid grid-cols-3 content-start gap-12 w-full md:grid-cols-2 lg:grid-cols-3 max-sm:grid-cols-1 max-[476px]:grid-cols-1 justify-center'>
+          {data?.map((user) => {
+            if (user.name) {
+              return (
+                <div
+                  key={user._id}
+                  className='border text-center max-w-[400px] items-center  hover:shadow-lg rounded-lg cursor-pointer'
+                >
+                  <Link href={`/users/${user._id}`}>
+                    <img src={user.cover} alt={user.name} />
+                  </Link>
+                </div>
+              );
+            }
+            return null;
+          })}
+        </div>
       </div>
     </div>
   );
 };
 
 export async function getServerSideProps() {
-  const res = await fetch('http://localhost:3000/api/users');
+  const res = await fetch(`${process.env.URL}/api/users`);
   const data = await res.json();
 
   return { props: { data } };

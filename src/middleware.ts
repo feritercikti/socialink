@@ -1,4 +1,4 @@
-import { NextResponse, NextFetchEvent } from 'next/server';
+import { NextResponse } from 'next/server';
 import { withAuth } from 'next-auth/middleware';
 import { getToken } from 'next-auth/jwt';
 
@@ -22,10 +22,6 @@ export default withAuth(async function middleware(request) {
 
       return NextResponse.rewrite(ownPageUrl.href);
     }
-  }
-
-  if (!isAuthenticated) {
-    return NextResponse.redirect(new URL('/login', request.url));
   }
 
   return NextResponse.next();
