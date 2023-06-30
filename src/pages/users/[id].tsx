@@ -98,7 +98,7 @@ const UserPage = ({ data }: { data: User }) => {
 export const getServerSideProps: GetServerSideProps = async ({ params }) => {
   // const { id } = context.query;
   const { id } = params as ParsedUrlQuery;
-  const res = await fetch(`http://localhost:3000/api/users/${id}`);
+  const res = await fetch(`${process.env.NEXTAUTH_URL}/api/users/${id}`);
   const data = await res.json();
 
   return { props: { data } };
